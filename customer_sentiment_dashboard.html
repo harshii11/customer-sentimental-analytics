@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Sentiment Analytics Dashboard</title>
+  <style>
+    /* Self-Contained Offline CSS - White + Purple Visual Identity */
+    :root {
+      --bg: #FFFFFF;
+      --card-bg: #F8F5FF;
+      --card-border: #D8B4FE;
+      --primary: #3B1E54;
+      --accent: #7B2CBF;
+      --accent-light: #9D4EDD;
+      --accent-pale: #EDE7F6;
+      --muted: #5E548E;
+      --text: #1F1A24;
+      --positive: #7B2CBF;
+      --neutral: #BDB2FF;
+      --negative: #9A348E;
+      --shadow: 0 2px 6px rgba(59, 30, 84, 0.05);
+      --shadow-hover: 0 6px 14px rgba(59, 30, 84, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Header Banner */
+    .header-banner {
+      background: linear-gradient(135deg, #F8F5FF 0%, #FFFFFF 50%, #F8F5FF 100%);
+      border: 1.5px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    @media (min-width: 768px) {
+      .header-banner {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      background-color: var(--accent-pale);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--accent);
+    }
+
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .creator-tag {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-stats {
+      text-align: right;
+    }
+
+    .header-stats-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header-stats-value {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .header-stats-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    @media (min-width: 640px) {
+      .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .kpi-grid {
+        grid-template-columns: repeat(6, 1fr);
+      }
+    }
+
+    .kpi-card {
+      background-color: var(--card-bg);
+      border: 1.2px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .kpi-card.border-pos { border-left: 4.5px solid var(--positive); }
+    .kpi-card.border-neu { border-left: 4.5px solid var(--neutral); }
+    .kpi-card.border-neg { border-left: 4.5px solid var(--negative); }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 4px 0;
+      line-height: 1.1;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* Section Headers */
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px solid var(--accent-pale);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background-color: var(--accent-pale);
+      color: var(--accent);
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 900px) {
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .card {
+      background-color: #FFFFFF;
+      border: 1.2px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Progress & Charts */
+    .bar-row {
+      margin-bottom: 14px;
+    }
+
+    .bar-label-group {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .progress-track {
+      background-color: var(--accent-pale);
+      height: 10px;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 9999px;
+    }
+
+    /* Emotion Spectrum Grid */
+    .emotion-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .emotion-pill {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .emotion-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .emotion-desc {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Tag Clouds */
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .tag-item {
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--card-border);
+      background-color: var(--card-bg);
+      color: var(--primary);
+    }
+
+    .tag-item.pos { color: var(--positive); }
+    .tag-item.neg { color: var(--negative); background-color: #FFF5F8; border-color: #FBCFE8; }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    thead th {
+      background-color: var(--primary);
+      color: #FFFFFF;
+      padding: 10px 12px;
+      font-weight: 700;
+    }
+
+    thead th:first-child { border-top-left-radius: 8px; }
+    thead th:last-child { border-top-right-radius: 8px; }
+
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--accent-pale);
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: var(--card-bg);
+    }
+
+    /* Business Recommendations Cards */
+    .recom-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 768px) {
+      .recom-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .recom-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .recom-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .recom-text {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    /* Footer */
+    .footer {
+      background-color: #FFFFFF;
+      text-align: center;
+      padding: 24px 0 10px 0;
+      border-top: 1px solid var(--accent-pale);
+      margin-top: 16px;
+    }
+
+    .footer-credit {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.6px;
+    }
+
+    .footer-sub {
+      font-size: 11px;
+      color: var(--accent);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- TOP HEADER BANNER -->
+    <header class="header-banner">
+      <div>
+        <div class="badge-pill">
+          <span class="badge-dot"></span>
+          NLP Opinion Mining & Emotion Intelligence
+        </div>
+        <h1 class="title">CUSTOMER SENTIMENT ANALYTICS</h1>
+        <p class="subtitle">Analyzing Customer Reviews, Sentiments & Emotions using NLP • <em>Amazon Alexa Dataset</em></p>
+        <div class="creator-tag">
+          <span>Created by Harshita Tomer</span>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="header-stats-title">Analyzed Records</div>
+        <div class="header-stats-value">2,435 Verified Reviews</div>
+        <div class="header-stats-sub">16 Hardware Product Variations</div>
+      </div>
+    </header>
+
+    <!-- KPI CARDS -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Reviews</span>
+        <div class="kpi-value">2,435</div>
+        <span class="kpi-sub">Cleaned & Unique</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Average Rating</span>
+        <div class="kpi-value">4.44 <span style="font-size: 15px; color: var(--accent);">/ 5</span></div>
+        <span class="kpi-sub">86.3% (4 & 5 Stars)</span>
+      </div>
+
+      <div class="kpi-card border-pos">
+        <span class="kpi-label" style="color: var(--positive);">Positive Share</span>
+        <div class="kpi-value">81.5%</div>
+        <span class="kpi-sub">1,985 Customer Reviews</span>
+      </div>
+
+      <div class="kpi-card border-neu">
+        <span class="kpi-label">Neutral Share</span>
+        <div class="kpi-value">11.1%</div>
+        <span class="kpi-sub">271 Objective Reviews</span>
+      </div>
+
+      <div class="kpi-card border-neg">
+        <span class="kpi-label" style="color: var(--negative);">Negative Share</span>
+        <div class="kpi-value">7.4%</div>
+        <span class="kpi-sub">179 Critical Reviews</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Dominant Emotion</span>
+        <div class="kpi-value" style="color: var(--accent);">Joy</div>
+        <span class="kpi-sub">62.4% Frequency</span>
+      </div>
+    </section>
+
+    <!-- SECTION 1: SENTIMENT OVERVIEW & SECTION 2: EMOTION INSIGHTS -->
+    <div class="grid-2">
+      <!-- SENTIMENT OVERVIEW -->
+      <div class="card">
+        <div class="section-title-wrap">
+          <h2 class="section-title">SENTIMENT OVERVIEW</h2>
+          <span class="section-tag">VADER NLP</span>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label-group">
+            <span style="color: var(--primary);">Positive Sentiment (>= +0.05)</span>
+            <span style="color: var(--positive);">81.5% (1,985 reviews)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 81.5%; background-color: var(--positive);"></div>
+          </div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label-group">
+            <span style="color: var(--primary);">Neutral Sentiment (-0.05 to +0.05)</span>
+            <span style="color: var(--muted);">11.1% (271 reviews)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 11.1%; background-color: var(--neutral);"></div>
+          </div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label-group">
+            <span style="color: var(--primary);">Negative Sentiment (<= -0.05)</span>
+            <span style="color: var(--negative);">7.4% (179 reviews)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 7.4%; background-color: var(--negative);"></div>
+          </div>
+        </div>
+
+        <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+          <span style="color: var(--muted); font-weight: 600;">Positive-to-Negative Ratio</span>
+          <span style="color: var(--primary); font-size: 18px; font-weight: 800;">11.1 : 1</span>
+        </div>
+      </div>
+
+      <!-- EMOTION INSIGHTS -->
+      <div class="card">
+        <div class="section-title-wrap">
+          <h2 class="section-title">EMOTION INSIGHTS</h2>
+          <span class="section-tag">Psychological Lexicon</span>
+        </div>
+
+        <div class="emotion-grid">
+          <div class="emotion-pill">
+            <div class="emotion-name">
+              <span>Joy</span>
+              <span style="color: var(--accent);">62.4%</span>
+            </div>
+            <p class="emotion-desc">1,519 reviews praising audio, ease of use, and automation</p>
+          </div>
+
+          <div class="emotion-pill">
+            <div class="emotion-name">
+              <span>Neutral / Other</span>
+              <span style="color: var(--muted);">32.3%</span>
+            </div>
+            <p class="emotion-desc">787 objective functional statements without strong valence</p>
+          </div>
+
+          <div class="emotion-pill">
+            <div class="emotion-name">
+              <span>Fear / Worry</span>
+              <span style="color: var(--negative);">2.0%</span>
+            </div>
+            <p class="emotion-desc">49 reviews highlighting privacy, disconnection, and glitches</p>
+          </div>
+
+          <div class="emotion-pill">
+            <div class="emotion-name">
+              <span>Sadness</span>
+              <span style="color: var(--negative);">1.8%</span>
+            </div>
+            <p class="emotion-desc">43 reviews expressing disappointment in audio and broken units</p>
+          </div>
+
+          <div class="emotion-pill" style="grid-column: span 2;">
+            <div class="emotion-name">
+              <span>Anger / Frustration</span>
+              <span style="color: var(--negative);">1.4% (35 reviews)</span>
+            </div>
+            <p class="emotion-desc">Intense dissatisfaction regarding unresponsive skills, smart plug failure, and refunds</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: RATING ANALYSIS & SECTION 4: CUSTOMER FEEDBACK -->
+    <div class="grid-2">
+      <!-- RATING ANALYSIS -->
+      <div class="card">
+        <div class="section-title-wrap">
+          <h2 class="section-title">RATING ANALYSIS</h2>
+          <span class="section-tag">Star Distribution</span>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label-group">
+            <span>5 Stars (Outstanding)</span>
+            <span style="color: var(--primary);">72.1% (1,756)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 72.1%; background-color: var(--primary);"></div>
+          </div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label-group">
+            <span>4 Stars (Good)</span>
+            <span style="color: var(--accent);">14.2% (345)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 14.2%; background-color: var(--accent);"></div>
+          </div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label-group">
+            <span>3 Stars (Average)</span>
+            <span style="color: var(--accent-light);">4.6% (113)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 4.6%; background-color: var(--accent-light);"></div>
+          </div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label-group">
+            <span>2 Stars (Poor)</span>
+            <span style="color: var(--negative);">3.3% (80)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 3.3%; background-color: var(--negative);"></div>
+          </div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label-group">
+            <span>1 Star (Critical)</span>
+            <span style="color: var(--negative);">5.8% (141)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 5.8%; background-color: var(--negative);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMER FEEDBACK -->
+      <div class="card">
+        <div class="section-title-wrap">
+          <h2 class="section-title">CUSTOMER FEEDBACK</h2>
+          <span class="section-tag">Word Length & Quotes</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+          <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; text-align: center;">
+            <div style="font-size: 11px; color: var(--muted); font-weight: 700;">POSITIVE REVIEW LENGTH</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--positive); margin-top: 2px;">20.1 words</div>
+            <div style="font-size: 10px; color: var(--muted);">Concise & enthusiastic praise</div>
+          </div>
+          <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; text-align: center;">
+            <div style="font-size: 11px; color: var(--muted); font-weight: 700;">NEGATIVE REVIEW LENGTH</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--negative); margin-top: 2px;">38.6 words</div>
+            <div style="font-size: 10px; color: var(--muted);">Detailed diagnostic complaints</div>
+          </div>
+        </div>
+
+        <div style="background-color: #FFFFFF; border-left: 3.5px solid var(--positive); border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; font-size: 11.5px; font-style: italic;">
+          "Love it! Great sound quality, plays music easily, controls lights seamlessly."
+        </div>
+        <div style="background-color: #FFFFFF; border-left: 3.5px solid var(--negative); border-radius: 6px; padding: 8px 12px; font-size: 11.5px; font-style: italic;">
+          "The outlet does not work with it. You spend so much time trying to figure out how to phrase it for the machine."
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: KEYWORDS -->
+    <div class="card">
+      <div class="section-title-wrap">
+        <h2 class="section-title">KEYWORDS & FREQUENCY DYNAMICS</h2>
+        <span class="section-tag">Lexical Mining</span>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--positive); margin-bottom: 6px;">TOP PRAISE KEYWORDS (Positive Cohort)</div>
+          <div class="tag-container">
+            <span class="tag-item pos">love <strong>(736)</strong></span>
+            <span class="tag-item pos">great <strong>(555)</strong></span>
+            <span class="tag-item pos">music <strong>(328)</strong></span>
+            <span class="tag-item pos">works <strong>(279)</strong></span>
+            <span class="tag-item pos">easy <strong>(263)</strong></span>
+            <span class="tag-item pos">sound <strong>(213)</strong></span>
+            <span class="tag-item pos">good <strong>(206)</strong></span>
+            <span class="tag-item pos">home <strong>(153)</strong></span>
+            <span class="tag-item pos">bought <strong>(138)</strong></span>
+            <span class="tag-item pos">speaker <strong>(120)</strong></span>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--negative); margin-bottom: 6px;">TOP FRICTION KEYWORDS (Negative Cohort)</div>
+          <div class="tag-container">
+            <span class="tag-item neg">alarm <strong>(30)</strong></span>
+            <span class="tag-item neg">screen <strong>(28)</strong></span>
+            <span class="tag-item neg">time <strong>(22)</strong></span>
+            <span class="tag-item neg">sound <strong>(19)</strong></span>
+            <span class="tag-item neg">reset <strong>(17)</strong></span>
+            <span class="tag-item neg">connect <strong>(16)</strong></span>
+            <span class="tag-item neg">issue <strong>(14)</strong></span>
+            <span class="tag-item neg">problem <strong>(14)</strong></span>
+            <span class="tag-item neg">return <strong>(13)</strong></span>
+            <span class="tag-item neg">stop <strong>(11)</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: BUSINESS INSIGHTS & RECOMMENDATIONS -->
+    <div class="card">
+      <div class="section-title-wrap">
+        <h2 class="section-title">BUSINESS INSIGHTS & HARDWARE BENCHMARKS</h2>
+        <span class="section-tag">Actionable Strategy</span>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Hardware Model / Variation</th>
+              <th style="text-align: center;">Verified Reviews</th>
+              <th style="text-align: center;">Average Rating</th>
+              <th style="text-align: right;">Positive Share</th>
+              <th style="text-align: right;">Negative Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight: 700; color: var(--primary);">Charcoal Fabric (Echo)</td>
+              <td style="text-align: center;">219</td>
+              <td style="text-align: center; color: var(--accent); font-weight: 700;">4.74</td>
+              <td style="text-align: right; color: var(--positive); font-weight: 700;">89.0%</td>
+              <td style="text-align: right; color: var(--negative);">3.2%</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: var(--primary);">Heather Gray Fabric</td>
+              <td style="text-align: center;">79</td>
+              <td style="text-align: center; color: var(--accent); font-weight: 700;">4.70</td>
+              <td style="text-align: right; color: var(--positive); font-weight: 700;">88.6%</td>
+              <td style="text-align: right; color: var(--negative);">2.5%</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: var(--primary);">Fire TV Stick Configuration</td>
+              <td style="text-align: center;">342</td>
+              <td style="text-align: center; font-weight: 600;">4.59</td>
+              <td style="text-align: right; color: var(--positive);">82.2%</td>
+              <td style="text-align: right; color: var(--negative);">6.4%</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: var(--primary);">Black Dot (Echo Dot)</td>
+              <td style="text-align: center;">252</td>
+              <td style="text-align: center; font-weight: 600;">4.45</td>
+              <td style="text-align: right; color: var(--positive);">79.4%</td>
+              <td style="text-align: right; color: var(--negative);">8.3%</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: var(--primary);">Standard Black Plastic Finish</td>
+              <td style="text-align: center;">261</td>
+              <td style="text-align: center; font-weight: 600;">4.23</td>
+              <td style="text-align: right; color: var(--positive);">73.6%</td>
+              <td style="text-align: right; color: var(--negative); font-weight: 700;">11.9%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="recom-grid" style="margin-top: 18px;">
+        <div class="recom-card">
+          <div class="recom-title">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background-color: var(--accent);"></span>
+            1. Acoustic Engineering & Bass Fidelity
+          </div>
+          <p class="recom-text">Customer praise is heavily tied to music streaming. Prioritize clear bass response in entry models (Echo Dot) and market acoustic upgrades explicitly to repeat buyers.</p>
+        </div>
+
+        <div class="recom-card">
+          <div class="recom-title">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background-color: var(--accent);"></span>
+            2. WiFi Firmware Self-Healing
+          </div>
+          <p class="recom-text">Negative reviews highlight paired smart plug drops and sync timeouts. Implement automatic background reconnection protocols to eliminate manual factory resets.</p>
+        </div>
+
+        <div class="recom-card">
+          <div class="recom-title">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background-color: var(--accent);"></span>
+            3. Natural Voice Syntax Tolerance
+          </div>
+          <p class="recom-text">Broaden natural language intent tolerance so users are not forced into rigid syntax memorization for routine alarms and commands.</p>
+        </div>
+
+        <div class="recom-card">
+          <div class="recom-title">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background-color: var(--accent);"></span>
+            4. Spanish & Multilingual Localization
+          </div>
+          <p class="recom-text">Expand seamless bilingual interaction (English/Spanish switching) to tap high-satisfaction international demographics who praised the hardware but lamented language gaps.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBTLE PROFESSIONAL FOOTER -->
+    <footer class="footer">
+      <p class="footer-credit">Created by Harshita Tomer</p>
+      <p class="footer-sub">Customer Sentiment Analytics • White + Purple Dashboard Edition</p>
+    </footer>
+
+  </div>
+</body>
+</html>
