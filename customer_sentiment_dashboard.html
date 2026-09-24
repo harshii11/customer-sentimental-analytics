@@ -797,6 +797,56 @@
       </div>
     </div>
 
+    <!-- SECTION 7: INTERACTIVE LIVE REVIEW TESTER -->
+    <div class="card" id="interactive-tester">
+      <div class="section-title-wrap">
+        <h2 class="section-title">LIVE SENTIMENT & EMOTION ANALYZER</h2>
+        <span class="section-tag">Interactive NLP Widget</span>
+      </div>
+      <p style="font-size: 12.5px; color: var(--muted); margin-bottom: 14px;">
+        Test custom customer review text in real-time. The offline NLP engine computes compound polarity sentiment and categorizes psychological emotion using the fine-tuned lexicon.
+      </p>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+        <button onclick="loadSample(1)" style="font-size: 11px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--card-bg); color: var(--primary); cursor: pointer; font-weight: 600;">Sample: Audio Praise</button>
+        <button onclick="loadSample(2)" style="font-size: 11px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--card-bg); color: var(--primary); cursor: pointer; font-weight: 600;">Sample: WiFi Drop Complaint</button>
+        <button onclick="loadSample(3)" style="font-size: 11px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--card-bg); color: var(--primary); cursor: pointer; font-weight: 600;">Sample: Factual Neutral</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <textarea id="reviewInput" rows="3" style="width: 100%; border: 1.5px solid var(--card-border); border-radius: 8px; padding: 12px; font-family: inherit; font-size: 13px; color: var(--primary); outline: none; transition: border-color 0.2s;" placeholder="Type or paste any customer review here...">The sound quality on this Echo Dot is awesome, absolutely love listening to music on it!</textarea>
+        
+        <div style="display: flex; justify-content: flex-end;">
+          <button onclick="runInference()" style="background: linear-gradient(135deg, #7B2CBF 0%, #3B1E54 100%); color: #FFFFFF; font-weight: 700; font-size: 13px; padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(123, 44, 191, 0.25);">Analyze Review Sentiment</button>
+        </div>
+      </div>
+
+      <!-- Analysis Result Box -->
+      <div id="resultBox" style="margin-top: 16px; background-color: var(--card-bg); border: 1.5px solid var(--card-border); border-radius: 12px; padding: 16px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 12px;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Predicted Sentiment</span>
+            <div id="resSentiment" style="font-size: 20px; font-weight: 800; color: var(--positive); margin-top: 2px;">POSITIVE (+0.88)</div>
+          </div>
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Dominant Emotion</span>
+            <div id="resEmotion" style="font-size: 20px; font-weight: 800; color: var(--primary); margin-top: 2px;">Joy (Confidence: High)</div>
+          </div>
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Polarity Spectrum</span>
+            <div style="margin-top: 6px;">
+              <div class="progress-track" style="height: 10px;">
+                <div id="resMeter" class="progress-fill" style="width: 94%; background-color: var(--positive);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--accent-pale); padding-top: 8px;">
+          <strong>Detected NLP Triggers: </strong><span id="resTokens" style="color: var(--primary);">awesome (+0.62), love (+0.64), sound (+0.15)</span>
+        </div>
+      </div>
+    </div>
+
     <!-- SUBTLE PROFESSIONAL FOOTER -->
     <footer class="footer">
       <p class="footer-credit">Created by Harshita Tomer</p>
@@ -804,5 +854,85 @@
     </footer>
 
   </div>
+
+  <script>
+    const emoLex = {
+      'Joy': ['love', 'great', 'awesome', 'amazing', 'excellent', 'happy', 'best', 'enjoy', 'wonderful', 'perfect', 'favorite', 'fun', 'glad', 'super', 'pleased', 'good', 'nice', 'cool', 'fantastic', 'brilliant', 'delight', 'loved', 'loving', 'likes'],
+      'Anger': ['hate', 'angry', 'terrible', 'worst', 'horrible', 'garbage', 'mad', 'useless', 'trash', 'junk', 'suck', 'sucks', 'scam', 'annoying', 'annoyed', 'frustrating', 'frustrated', 'stupid', 'ridiculous', 'pissed', 'crap'],
+      'Sadness': ['disappointed', 'disappointing', 'disappointment', 'sad', 'regret', 'unfortunate', 'unfortunately', 'poor', 'broke', 'broken', 'failed', 'fails', 'failure', 'cried', 'loss', 'boring', 'miss', 'pathetic'],
+      'Fear': ['worried', 'worry', 'afraid', 'scared', 'concern', 'concerned', 'problem', 'problems', 'panic', 'nervous', 'risk', 'danger', 'creepy', 'doubt', 'issue', 'issues', 'warning', 'security', 'privacy', 'unsecure'],
+      'Surprise': ['surprised', 'surprising', 'surprise', 'wow', 'unexpected', 'unexpectedly', 'shock', 'shocked', 'amaze', 'amazed', 'astonished', 'astonishing', 'incredible', 'sudden', 'suddenly']
+    };
+
+    const valLex = {
+      'love': 0.65, 'great': 0.55, 'awesome': 0.62, 'amazing': 0.60, 'excellent': 0.60, 'good': 0.40, 'nice': 0.35, 'best': 0.50, 'perfect': 0.55, 'happy': 0.45,
+      'hate': -0.70, 'worst': -0.75, 'terrible': -0.70, 'horrible': -0.70, 'garbage': -0.65, 'useless': -0.60, 'disappointed': -0.55, 'poor': -0.45, 'broken': -0.50, 'failed': -0.50
+    };
+
+    function runInference() {
+      const text = document.getElementById('reviewInput').value;
+      const words = text.toLowerCase().match(/[a-z]+/g) || [];
+      
+      let score = 0;
+      let triggers = [];
+      words.forEach(w => {
+        if (valLex[w] !== undefined) {
+          score += valLex[w];
+          triggers.push(`${w} (${valLex[w] > 0 ? '+' : ''}${valLex[w].toFixed(2)})`);
+        }
+      });
+      
+      let emoCounts = { 'Joy': 0, 'Anger': 0, 'Sadness': 0, 'Fear': 0, 'Surprise': 0 };
+      words.forEach(w => {
+        for (const [emo, list] of Object.entries(emoLex)) {
+          if (list.includes(w)) emoCounts[emo]++;
+        }
+      });
+      
+      let topEmo = 'Neutral/Other';
+      let maxCnt = 0;
+      for (const [emo, cnt] of Object.entries(emoCounts)) {
+        if (cnt > maxCnt) { maxCnt = cnt; topEmo = emo; }
+      }
+
+      const sentimentEl = document.getElementById('resSentiment');
+      const emotionEl = document.getElementById('resEmotion');
+      const meterEl = document.getElementById('resMeter');
+      const tokensEl = document.getElementById('resTokens');
+
+      const compound = Math.max(-1.0, Math.min(1.0, score || (words.length ? 0.0 : 0.0)));
+
+      if (compound >= 0.05) {
+        sentimentEl.textContent = `POSITIVE (${compound >= 0 ? '+' : ''}${compound.toFixed(2)})`;
+        sentimentEl.style.color = 'var(--positive)';
+        meterEl.style.backgroundColor = 'var(--positive)';
+        meterEl.style.width = `${Math.min(100, Math.round(50 + compound * 50))}%`;
+      } else if (compound <= -0.05) {
+        sentimentEl.textContent = `NEGATIVE (${compound.toFixed(2)})`;
+        sentimentEl.style.color = 'var(--negative)';
+        meterEl.style.backgroundColor = 'var(--negative)';
+        meterEl.style.width = `${Math.max(5, Math.round(50 + compound * 50))}%`;
+      } else {
+        sentimentEl.textContent = `NEUTRAL (0.00)`;
+        sentimentEl.style.color = 'var(--muted)';
+        meterEl.style.backgroundColor = 'var(--neutral)';
+        meterEl.style.width = '50%';
+      }
+
+      emotionEl.textContent = `${topEmo} (Triggers: ${maxCnt})`;
+      tokensEl.textContent = triggers.length ? triggers.join(', ') : 'None detected (lexicon baseline)';
+    }
+
+    function loadSample(num) {
+      const input = document.getElementById('reviewInput');
+      if (num === 1) input.value = "The sound quality on this Echo Dot is awesome, absolutely love listening to music on it!";
+      else if (num === 2) input.value = "It stopped working after 3 days and keeps dropping WiFi connection. Very disappointed and frustrating.";
+      else if (num === 3) input.value = "I received the package on Monday afternoon and unboxed the device.";
+      runInference();
+    }
+
+    // Run on load
+    runInference();
+  </script>
 </body>
 </html>
